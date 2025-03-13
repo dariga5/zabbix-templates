@@ -1,0 +1,417 @@
+zabbix_export:
+  version: '6.2'
+  date: '2025-03-13T06:30:38Z'
+  template_groups:
+    -
+      uuid: 67e6e80c733e46e9a63a0771789d31a0
+      name: orbank
+    -
+      uuid: 7df96b18c230490a9a0a9e2307226338
+      name: Templates
+  templates:
+    -
+      uuid: 3192cdf894ad474a98ecc47f3c72e5f2
+      template: ORBANK_ViPNetHW4-SNMPv2-template
+      name: ORBANK_ViPNetHW4-SNMPv2-template
+      groups:
+        -
+          name: orbank
+        -
+          name: Templates
+      items:
+        -
+          uuid: 9a86508b380248fd9972454e7f9df80e
+          name: 'Средняя нагрузка на ядро за последнюю минуту'
+          type: SNMP_AGENT
+          snmp_oid: 1.3.6.1.2.1.25.3.3.1.2.196608
+          key: hardware.cpu.load
+          units: '%'
+          triggers:
+            -
+              uuid: a9585affb9d54ca1a90871d173b9bae8
+              expression: 'min(/ORBANK_ViPNetHW4-SNMPv2-template/hardware.cpu.load,30)>{$MAX_CPU}'
+              name: 'Нагрузка на ЦПУ выше {$MAX_CPU}% дольше 30 минут'
+              priority: HIGH
+        -
+          uuid: e365e7845daa4045b5d71f4c6b4dbab9
+          name: Ping
+          type: SIMPLE
+          key: 'icmpping[]'
+          delay: 5m
+          valuemap:
+            name: ping
+          triggers:
+            -
+              uuid: aac4febd35ca4766918df1edf0e1ec73
+              expression: 'last(/ORBANK_ViPNetHW4-SNMPv2-template/icmpping[])=0'
+              name: 'Ping недоступен'
+              priority: HIGH
+        -
+          uuid: e57cf5eb84094cc498fb8bf81625d411
+          name: 'SNMP Name'
+          type: SNMP_AGENT
+          snmp_oid: 1.3.6.1.2.1.1.5.0
+          key: system.hostname
+          delay: 1d
+          trends: '0'
+          value_type: TEXT
+        -
+          uuid: 76367982445448c49d55601eb09cd5c7
+          name: 'Interface counter'
+          type: SNMP_AGENT
+          snmp_oid: 1.3.6.1.2.1.2.1.0
+          key: system.net.count
+          delay: 2h
+        -
+          uuid: 2a57bda62ab04710acceb6900d1756ac
+          name: Uptime
+          type: SNMP_AGENT
+          snmp_oid: 1.3.6.1.2.1.1.3.0
+          key: system.uptime
+          delay: 30s
+          trends: '0'
+          units: uptime
+          preprocessing:
+            -
+              type: MULTIPLIER
+              parameters:
+                - '0.01'
+          tags:
+            -
+              tag: Application
+              value: 'ViPNet IDS'
+          triggers:
+            -
+              uuid: b2893054712a45d9b805bb4816d408c0
+              expression: last(/ORBANK_ViPNetHW4-SNMPv2-template/system.uptime)<10m
+              name: '{HOST.NAME} has been restarted (uptime < 10m)'
+              priority: WARNING
+              manual_close: 'YES'
+        -
+          uuid: 7ca702eda3264fe5a722b7436ea7c173
+          name: Hostname
+          type: SNMP_AGENT
+          snmp_oid: 1.3.6.1.2.1.1.1.0
+          key: vipnet.name
+          trends: '0'
+          value_type: TEXT
+        -
+          uuid: 1e1fc47d585a4637887d8b1797bfe4df
+          name: 'SNMP agent availability'
+          type: INTERNAL
+          key: 'zabbix[host,snmp,available]'
+          history: 7d
+          description: |
+            Availability of SNMP checks on the host. The value of this item corresponds to availability icons in the host list.
+            Possible value:
+            0 - not available
+            1 - available
+            2 - unknown
+          valuemap:
+            name: 'SNMP state'
+          triggers:
+            -
+              uuid: f0a61a85e7c64399ab8833ce6273f195
+              expression: 'max(/ORBANK_ViPNetHW4-SNMPv2-template/zabbix[host,snmp,available],{$SNMP.TIMEOUT})=0'
+              name: 'SNMP агент недоступен больше {$SNMP.TIMEOUT}'
+              opdata: 'Current state: {ITEM.LASTVALUE1}'
+              priority: HIGH
+      discovery_rules:
+        -
+          uuid: 57b62256d5144c9fb78ba01d0e13d2cf
+          name: 'Обнаружение ЦПУ'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#CPUID},1.3.6.1.2.1.25.3.3.1.1,{#CPULOAD},1.3.6.1.2.1.25.3.3.1.2]'
+          key: hardware.cpu.discovery
+          status: DISABLED
+          item_prototypes:
+            -
+              uuid: 9585b3f5954347efa20bdfb4e889c7ec
+              name: 'ID продукта {#CPUID}'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.25.3.3.1.1.{#SNMPINDEX}'
+              key: 'hardware.cpu.id[cpu.{#SNMPINDEX}]'
+              trends: '0'
+              value_type: CHAR
+            -
+              uuid: f9bf4c54bda04ed9a7e5a4c284cd6204
+              name: 'Средняя нагрузка на ядро {#CPUID}'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.25.3.3.1.2.{#SNMPINDEX}'
+              key: 'hardware.cpu.load[cpu.{#SNMPINDEX}]'
+              units: '%'
+        -
+          uuid: 8c75b5ee8b00481d8ec27d5a05b3f70e
+          name: 'Обнаружение температурных датчиков'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SENSORINDEX},1.3.6.1.4.1.2021.13.16.2.1.1, {#SENSORNAME},1.3.6.1.4.1.2021.13.16.2.1.2]'
+          key: hardware.sensor.discovery
+          item_prototypes:
+            -
+              uuid: ca929640fbbf4a1b81d489cf8b206e91
+              name: 'Температура на {#SENSORNAME}'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.4.1.2021.13.16.2.1.3.{#SNMPINDEX}'
+              key: 'hardware.sensor.temp[sensor.{#SNMPINDEX}]'
+              units: ℃
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '0.001'
+              trigger_prototypes:
+                -
+                  uuid: c507956f50374a698fadf1f77d4fe826
+                  expression: 'avg(/ORBANK_ViPNetHW4-SNMPv2-template/hardware.sensor.temp[sensor.{#SNMPINDEX}],10)>={$MAX_TEMP}'
+                  name: 'Высокая температура ЦПУ(avg > {$MAX_TEMP})'
+                  opdata: 'Температура: {ITEM.LASTVALUE}'
+                  priority: HIGH
+        -
+          uuid: 8d07ece5d9274066924965b76c2c23ed
+          name: 'Обнаружение сетевых интерфейсов'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#IFINDEX},1.3.6.1.2.1.2.2.1.1, {#IFNAME},1.3.6.1.2.1.2.2.1.2]'
+          key: net.if.discovery
+          item_prototypes:
+            -
+              uuid: 2c9925955feb427297910eeedf8531cf
+              name: 'Interface {#IFNAME}: Bandwidth'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.2.2.1.5.{#SNMPINDEX}'
+              key: 'net.if.bandwidth[ifOcted.{#SNMPINDEX}]'
+              delay: 1d
+              units: b
+              valuemap:
+                name: 'ViPNet interface type'
+            -
+              uuid: 680b0f73330f480d840305606ae5edff
+              name: 'Interface {#IFNAME}: Trafic IN'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.31.1.1.1.6.{#SNMPINDEX}'
+              key: 'net.if.in[ifOcted.{#SNMPINDEX}]'
+              delay: 30s
+              value_type: FLOAT
+              units: bps
+              preprocessing:
+                -
+                  type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '8'
+            -
+              uuid: 9581de26b49e456a9ab1cbdf8eb36880
+              name: 'Interface {#IFNAME}: Link'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.2.2.1.5.{#SNMPINDEX}'
+              key: 'net.if.link[ifOcted.{#SNMPINDEX}]'
+              delay: 30s
+              trends: '0'
+              value_type: CHAR
+              valuemap:
+                name: 'ViPNet interface link'
+              preprocessing:
+                -
+                  type: JAVASCRIPT
+                  parameters:
+                    - 'return value == 0 ? 0 : 1'
+            -
+              uuid: c5ffc228856b44418f8f19ad9ad655e0
+              name: 'Interface {#IFNAME}: MAC'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.2.2.1.6.{#SNMPINDEX}'
+              key: 'net.if.mac[ifOcted.{#SNMPINDEX}]'
+              delay: 30s
+              trends: '0'
+              value_type: TEXT
+            -
+              uuid: b6c30781a68b4d35b7aa8a63c30f8d29
+              name: 'Interface {#IFNAME}: Mode'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.31.1.1.1.16.{#SNMPINDEX}'
+              key: 'net.if.mode[ifOcted.{#SNMPINDEX}]'
+              delay: 30s
+              valuemap:
+                name: 'ViPNet interface mode'
+            -
+              uuid: fb5779c6003c423aad9da5c65099045d
+              name: 'Interface {#IFNAME}: Trafic OUT'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.31.1.1.1.10.{#SNMPINDEX}'
+              key: 'net.if.out[ifOcted.{#SNMPINDEX}]'
+              delay: 30s
+              value_type: FLOAT
+              units: bps
+              preprocessing:
+                -
+                  type: CHANGE_PER_SECOND
+                  parameters:
+                    - ''
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '8'
+            -
+              uuid: 66c24e44ec4e4ee4b76d5ba4079842ef
+              name: 'Interface {#IFNAME}: Droped  IN packets'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.2.2.1.13.{#SNMPINDEX}'
+              key: 'net.if.pkg[ifOcted.{#SNMPINDEX}, in,droped]'
+              delay: 30s
+              trigger_prototypes:
+                -
+                  uuid: 6d8086ec09db4f57bf5698af0580846a
+                  expression: 'last(/ORBANK_ViPNetHW4-SNMPv2-template/net.if.pkg[ifOcted.{#SNMPINDEX}, in,droped])>0'
+                  name: 'Входящие пакеты были отвергнуты'
+                  opdata: 'Интерфейс: {#IFNAME}'
+                  priority: WARNING
+            -
+              uuid: 444c8e3a69a5491c853d07b32eab9d50
+              name: 'Interface {#IFNAME}: Droped OUT packets'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.2.2.1.19.{#SNMPINDEX}'
+              key: 'net.if.pkg[ifOcted.{#SNMPINDEX}, out, droped]'
+              delay: 30s
+              trigger_prototypes:
+                -
+                  uuid: 773fbef2d6574b42a2aeac16446720d8
+                  expression: 'last(/ORBANK_ViPNetHW4-SNMPv2-template/net.if.pkg[ifOcted.{#SNMPINDEX}, out, droped])>0'
+                  name: 'Исходящие пакеты были отвергнуты'
+                  opdata: 'Интерфейс: {#IFNAME}'
+                  priority: WARNING
+            -
+              uuid: bca66fdf92454fdd8ad457ef1bde33ee
+              name: 'Interface {#IFNAME}: State'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.2.2.1.8.{#SNMPINDEX}'
+              key: 'net.if.state[ifOcted.{#SNMPINDEX}]'
+              delay: 30s
+              trends: '0'
+              value_type: CHAR
+              valuemap:
+                name: 'ViPNet interface state'
+            -
+              uuid: 4cce2c9b17094d45b2461d643ff88099
+              name: 'Interface {#IFNAME}: Type'
+              type: SNMP_AGENT
+              snmp_oid: '1.3.6.1.2.1.2.2.1.3.{#SNMPINDEX}'
+              key: 'net.if.type[ifOcted.{#SNMPINDEX}]'
+              delay: 30s
+              trends: '0'
+              value_type: CHAR
+              valuemap:
+                name: 'ViPNet interface type'
+          trigger_prototypes:
+            -
+              uuid: 48f0539b0f6c4552b38e55e6385a5cbc
+              expression: '((change(/ORBANK_ViPNetHW4-SNMPv2-template/net.if.link[ifOcted.{#SNMPINDEX}])<0) and (last(/ORBANK_ViPNetHW4-SNMPv2-template/net.if.link[ifOcted.{#SNMPINDEX}])=0) and (last(/ORBANK_ViPNetHW4-SNMPv2-template/net.if.mode[ifOcted.{#SNMPINDEX}])=2))=1'
+              name: 'Интерфейс {#IFNAME} перешел в статус неактивный'
+              opdata: 'State: {ITEM.LASTVALUE2}; Link: {ITEM.LASTVALUE3}'
+              priority: HIGH
+            -
+              uuid: 056449d7f0ca4017a848f749ea531474
+              expression: '(min(/ORBANK_ViPNetHW4-SNMPv2-template/net.if.in[ifOcted.{#SNMPINDEX}],10)> (last(/ORBANK_ViPNetHW4-SNMPv2-template/net.if.bandwidth[ifOcted.{#SNMPINDEX}]) * 0.9))=1'
+              name: 'Скорость входящего трафика приближается к максимальной пропускной способности'
+              opdata: 'Интерфейс: {#IFNAME}'
+              priority: AVERAGE
+            -
+              uuid: c5b78cf14cfd43d5b1b20bc457b1921b
+              expression: '(min(/ORBANK_ViPNetHW4-SNMPv2-template/net.if.out[ifOcted.{#SNMPINDEX}],10)> (last(/ORBANK_ViPNetHW4-SNMPv2-template/net.if.bandwidth[ifOcted.{#SNMPINDEX}]) * 0.9))=1'
+              name: 'Скорость исходящего трафика приближается к максимальной пропускной способности'
+              opdata: 'Интерфейс: {#IFNAME}'
+              priority: AVERAGE
+          graph_prototypes:
+            -
+              uuid: 40c4ea7f78904c2190bdb25abc50c685
+              name: 'Trafic on {#IFNAME}'
+              ymin_type_1: FIXED
+              graph_items:
+                -
+                  color: 199C0D
+                  calc_fnc: ALL
+                  item:
+                    host: ORBANK_ViPNetHW4-SNMPv2-template
+                    key: 'net.if.in[ifOcted.{#SNMPINDEX}]'
+                -
+                  sortorder: '1'
+                  color: F63100
+                  calc_fnc: ALL
+                  item:
+                    host: ORBANK_ViPNetHW4-SNMPv2-template
+                    key: 'net.if.out[ifOcted.{#SNMPINDEX}]'
+      macros:
+        -
+          macro: '{$MAX_CPU}'
+          value: '90'
+        -
+          macro: '{$MAX_TEMP}'
+          value: '85'
+        -
+          macro: '{$SNMP.TIMEOUT}'
+          value: 3m
+      valuemaps:
+        -
+          uuid: 0de2c16e280e47daabceda7a15770ed0
+          name: ping
+          mappings:
+            -
+              value: '0'
+              newvalue: DOWN
+            -
+              value: '1'
+              newvalue: UP
+        -
+          uuid: c497d2aef7ab4a6eb949f992ab8ad7d8
+          name: 'SNMP state'
+          mappings:
+            -
+              value: '0'
+              newvalue: 'Not available'
+            -
+              value: '1'
+              newvalue: Available
+            -
+              value: '2'
+              newvalue: Unknown
+        -
+          uuid: 8fa7090c06374035b4dbaeae880737f1
+          name: 'ViPNet interface link'
+          mappings:
+            -
+              value: '0'
+              newvalue: DOWN
+            -
+              value: '1'
+              newvalue: UP
+        -
+          uuid: b9876d4fee114d7bb338602670ba8411
+          name: 'ViPNet interface mode'
+          mappings:
+            -
+              value: '1'
+              newvalue: ALL
+            -
+              value: '2'
+              newvalue: POINT-TO-POINT
+        -
+          uuid: 01f6fedf037747628aa42ab3bf143b88
+          name: 'ViPNet interface state'
+          mappings:
+            -
+              value: '1'
+              newvalue: 'ON'
+            -
+              value: '2'
+              newvalue: 'OFF'
+        -
+          uuid: 0e8b4512f23646cf92f015e531e25f17
+          name: 'ViPNet interface type'
+          mappings:
+            -
+              value: '6'
+              newvalue: ethernet
+            -
+              value: '24'
+              newvalue: localhost
