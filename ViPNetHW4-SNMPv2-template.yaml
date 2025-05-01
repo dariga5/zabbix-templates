@@ -1,0 +1,89 @@
+zabbix_export:
+  version: '6.2'
+  date: '2025-05-01T11:41:12Z'
+  template_groups:
+    -
+      uuid: 7df96b18c230490a9a0a9e2307226338
+      name: Templates
+  templates:
+    -
+      uuid: cbb315c79b9548438003e4ca96fbaeaa
+      template: ViPNetHW4-SNMPv2-template
+      name: ViPNetHW4-SNMPv2-template
+      groups:
+        -
+          name: Templates
+      macros:
+        -
+          macro: '{$MAX_CPU}'
+          value: '90'
+        -
+          macro: '{$MAX_TEMP}'
+          value: '85'
+        -
+          macro: '{$SNMP.TIMEOUT}'
+          value: 3m
+      valuemaps:
+        -
+          uuid: 5176da716f604376bf27bab4e839ba3f
+          name: ping
+          mappings:
+            -
+              value: '0'
+              newvalue: DOWN
+            -
+              value: '1'
+              newvalue: UP
+        -
+          uuid: 793f668607e34bf2b9d7f0bd05e56099
+          name: 'SNMP state'
+          mappings:
+            -
+              value: '0'
+              newvalue: 'Not available'
+            -
+              value: '1'
+              newvalue: Available
+            -
+              value: '2'
+              newvalue: Unknown
+        -
+          uuid: 4c562929b09e4aee8cebd6ad7441e840
+          name: 'ViPNet interface link'
+          mappings:
+            -
+              value: '0'
+              newvalue: DOWN
+            -
+              value: '1'
+              newvalue: UP
+        -
+          uuid: ef32941d79014326b23920cd68bfface
+          name: 'ViPNet interface mode'
+          mappings:
+            -
+              value: '1'
+              newvalue: ALL
+            -
+              value: '2'
+              newvalue: POINT-TO-POINT
+        -
+          uuid: 97f0226a2e444fc09ed058df9826c62c
+          name: 'ViPNet interface state'
+          mappings:
+            -
+              value: '1'
+              newvalue: 'ON'
+            -
+              value: '2'
+              newvalue: 'OFF'
+        -
+          uuid: d278ab89a90a4851b27a4ce9b5b00323
+          name: 'ViPNet interface type'
+          mappings:
+            -
+              value: '6'
+              newvalue: ethernet
+            -
+              value: '24'
+              newvalue: localhost

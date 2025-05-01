@@ -1,0 +1,85 @@
+zabbix_export:
+  version: '6.2'
+  date: '2025-05-01T11:40:53Z'
+  template_groups:
+    -
+      uuid: 7df96b18c230490a9a0a9e2307226338
+      name: Templates
+  templates:
+    -
+      uuid: 7da6ef57c7f842be90b4a17e0fd7d625
+      template: 'Eaton 93 UPS-template'
+      name: 'Eaton 93 UPS-template'
+      groups:
+        -
+          name: Templates
+      valuemaps:
+        -
+          uuid: 9ff6fba610cd4025b93f01afd8be24c9
+          name: 'ping avalible'
+          mappings:
+            -
+              value: '1'
+              newvalue: UP
+            -
+              value: '2'
+              newvalue: DOWN
+        -
+          uuid: 8e2dd8d820f64b6495490a6cfe0e46ff
+          name: xupsOutputSource
+          mappings:
+            -
+              value: '1'
+              newvalue: other
+            -
+              value: '2'
+              newvalue: none
+            -
+              value: '3'
+              newvalue: normal
+            -
+              value: '4'
+              newvalue: bypass
+            -
+              value: '5'
+              newvalue: battery
+            -
+              value: '6'
+              newvalue: booster
+            -
+              value: '7'
+              newvalue: reducer
+            -
+              value: '8'
+              newvalue: parallelCapacity
+            -
+              value: '9'
+              newvalue: parallelRedundant
+            -
+              value: '10'
+              newvalue: highEfficiencyMode
+        -
+          uuid: 3f4ab438544841f09e2cac1d371bd5fc
+          name: xupsTestBatteryStatus
+          mappings:
+            -
+              value: '1'
+              newvalue: unknown
+            -
+              value: '2'
+              newvalue: passed
+            -
+              value: '3'
+              newvalue: failed
+            -
+              value: '4'
+              newvalue: inProgress
+            -
+              value: '5'
+              newvalue: notSupported
+            -
+              value: '6'
+              newvalue: inhibited
+            -
+              value: '7'
+              newvalue: scheduled
